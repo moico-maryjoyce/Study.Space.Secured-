@@ -1,0 +1,52 @@
+
+---
+
+# ✅ `.gitignore` (Python + Flask + Flet)
+
+```gitignore
+# ➜ Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ➜ Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# ➜ Flask
+instance/
+.webassets-cache
+
+# ➜ Flet
+.flet/
+build/
+
+# ➜ Environment variables
+.env
+.env.local
+
+# ➜ Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ➜ OS files
+.DS_Store
+Thumbs.db
+
+# ➜ Logs
+*.log
+
+# ➜ Testing
+.coverage
+htmlcov/
+pytest_cache/
+
+# ➜ Compiled files
+*.exe
+*.dll
+*.so
+*.dylib
