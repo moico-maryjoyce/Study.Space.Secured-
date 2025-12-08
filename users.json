@@ -1,0 +1,111 @@
+{
+  "joyce": {
+    "password_hash": "0904d0a534fcf3d0b19166b1aca415465679c1847314f649d86fc7907533579b",
+    "email": "moico@gmail.com",
+    "name": "Joyce",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": true,
+    "last_login": "2025-12-08 10:30:00",
+    "locked": true
+  },
+  "moico": {
+    "password_hash": "0904d0a534fcf3d0b19166b1aca415465679c1847314f649d86fc7907533579b",
+    "email": "moicojoyce@gmail.com",
+    "name": "Moico",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": true,
+    "last_login": "2025-12-08 09:15:00",
+    "locked": false
+  },
+  "m": {
+    "password_hash": "ea7f0e221c54b06ba6d613972a4dbb59fc88187391e2f5fac87b61c7c69d1ac6",
+    "email": "moico@gmail.com",
+    "name": "User M",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "2025-12-08 08:45:00",
+    "locked": false
+  },
+  "nami": {
+    "password_hash": "489bca2e05d4488669faf0d488b83f79459460030bf337518ab995dc822bb24d",
+    "email": "rona@gmail.com",
+    "role": "Admin",
+    "name": "Nami",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "chandel": {
+    "password_hash": "bf9de34add76de3f7bf6eeb8142a596a466d3477c3f4cca8e4addc67656bd400",
+    "email": "chan@gmail.com",
+    "role": "Admin",
+    "name": "Chandel",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "username": {
+    "password_hash": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+    "email": "user@gmail.com",
+    "role": "Admin",
+    "name": "Username",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "namii": {
+    "password_hash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "email": "namii@gmail.com",
+    "role": "Admin",
+    "name": "Namii",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "nnn": {
+    "password_hash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "email": "nnn@gmail.com",
+    "role": "Admin",
+    "name": "Nnn",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "sss": {
+    "password_hash": "314ffd6162923d94123a7010c7c67be278592e5922ac5e3e404d65aa01608293",
+    "email": "sss@gmail.com",
+    "role": "Admin",
+    "name": "Sss",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "chann": {
+    "password_hash": "4a9ca4596692e94f9d2912b06a0d007564a22ee750339a6021c2392149b25d6d",
+    "email": "hhhhh@gmail.com",
+    "role": "Admin",
+    "name": "Chan",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "bobita": {
+    "password_hash": "9e69e7e29351ad837503c44a5971edebc9b7e6d8601c89c284b1b59bf37afa80",
+    "email": "bob@gmail.com",
+    "name": "Bobita"
+  },
+  "ssss": {
+    "password_hash": "8bb0cf6eb9b17d0f7d22b456f121257dc1254e1f01665370476383ea776df414",
+    "email": "aaaagmail.com"
+  }
+}
