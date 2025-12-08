@@ -38,19 +38,6 @@ def profile_view(page: ft.Page, is_admin_view=False):
                     return tf
         return None
 
-    # Helper: attach on_click to the first clickable control inside a wrapper
-    def attach_on_click(control, handler):
-        if control is None or handler is None:
-            return
-        if hasattr(control, "on_click"):
-            control.on_click = handler
-            return
-        if hasattr(control, "content") and control.content is not None:
-            attach_on_click(control.content, handler)
-        if hasattr(control, "controls") and control.controls:
-            for child in control.controls:
-                attach_on_click(child, handler)
-
     def on_logout(e):
         log_activity("logout", "admin" if is_admin_view else "user", "User logged out")
         page.session.set("current_user", "")
@@ -107,7 +94,7 @@ def profile_view(page: ft.Page, is_admin_view=False):
             page.session.set("username", new_username)
             page.session.set("email", new_email)
             
-            # Save password if provided (you probably want real validation later)
+            # Save password if provided
             if new_password:
                 if not current_password:
                     page.snack_bar = ft.SnackBar(ft.Text("Current password is required to set new password!"))
@@ -118,21 +105,17 @@ def profile_view(page: ft.Page, is_admin_view=False):
             
             # Save profile picture path if an image is present
             if isinstance(profile_picture.content, ft.Image):
-                # .src may be a local path or data URL; store it as-is
                 page.session.set("profile_picture", profile_picture.content.src)
 
             # Log the activity
             log_activity("profile_update", "admin" if is_admin_view else "user", f"Profile updated for {new_username}")
 
-            # Immediately update UI controls so user sees change without navigation
-            # Set text fields to the saved values (this refreshes content on the page)
+            # Update UI controls
             name_field.value = new_username
             email_field.value = new_email
-            # Clear password fields after update for security/UX
             current_password_field.value = ""
             new_password_field.value = ""
 
-            # Ensure the displayed profile picture matches the saved picture in session
             saved_pp = page.session.get("profile_picture")
             if saved_pp:
                 profile_picture.content = ft.Image(
@@ -146,8 +129,6 @@ def profile_view(page: ft.Page, is_admin_view=False):
             page.snack_bar = ft.SnackBar(ft.Text("Profile updated successfully!"))
             page.snack_bar.open = True
 
-            # Update changed controls
-            # Update individual controls rather than full page.go to avoid route side-effects
             name_field.update()
             email_field.update()
             current_password_field.update()
@@ -156,13 +137,12 @@ def profile_view(page: ft.Page, is_admin_view=False):
             page.update()
 
         except Exception as ex:
-            # Display exception so you can see what went wrong
             page.snack_bar = ft.SnackBar(ft.Text(f"Update failed: {ex}"))
             page.snack_bar.open = True
             page.update()
-            raise  # optional: re-raise if you want logs in console
+            raise
 
-    # Preload saved values into fields and picture
+    # Preload saved values
     saved_username = page.session.get("username")
     saved_email = page.session.get("email")
     saved_profile_picture = page.session.get("profile_picture")
@@ -181,22 +161,45 @@ def profile_view(page: ft.Page, is_admin_view=False):
             height=150,
             fit=ft.ImageFit.COVER,
         )
-    
-    # Create file picker for images
+
+    # Create file picker
     file_picker = ft.FilePicker(on_result=on_image_picked)
     page.overlay.append(file_picker)
 
-    # Create buttons and explicitly wire on_click to ensure the handler fires
-    update_btn = create_admin_button("Update Profile", is_primary=True, on_click=on_update_profile)
-    attach_on_click(update_btn, on_update_profile)
+    # --- FIXED PART: Bind click to REAL button inside wrapper ---
 
-    logout_btn = create_admin_button("Logout", is_primary=False, on_click=on_logout)
-    attach_on_click(logout_btn, on_logout)
+    update_btn = create_admin_button("Update Profile", is_primary=True)
 
+    def set_click_recursive(ctrl):
+        """Recursively find the real button and attach on_click."""
+        if hasattr(ctrl, "on_click"):
+            ctrl.on_click = on_update_profile
+        if hasattr(ctrl, "controls"):
+            for c in ctrl.controls:
+                set_click_recursive(c)
+        if hasattr(ctrl, "content") and ctrl.content:
+            set_click_recursive(ctrl.content)
+
+    set_click_recursive(update_btn)
+
+    # Logout button
+    logout_btn = create_admin_button("Logout", is_primary=False)
+    set_click_recursive(logout_btn)  # also fix logout button
+    # Ensure logout still calls its handler
+    def fix_logout(ctrl):
+        if hasattr(ctrl, "on_click"):
+            ctrl.on_click = on_logout
+        if hasattr(ctrl, "controls"):
+            for c in ctrl.controls:
+                fix_logout(c)
+        if hasattr(ctrl, "content") and ctrl.content:
+            fix_logout(ctrl.content)
+    fix_logout(logout_btn)
+
+    # UI Layout
     profile_card = ft.Container(
         content=ft.Row(
             [
-                # Left Column: Inputs
                 ft.Column(
                     [
                         name_field_col,
@@ -211,7 +214,6 @@ def profile_view(page: ft.Page, is_admin_view=False):
                     spacing=0
                 ),
                 ft.VerticalDivider(width=1),
-                # Profile Picture and Change button
                 ft.Column(
                     [
                         profile_picture,
@@ -252,8 +254,6 @@ def profile_view(page: ft.Page, is_admin_view=False):
                 padding=padding.symmetric(horizontal=15, vertical=5),
                 bgcolor=PRIMARY_COLOR,
                 border_radius=border_radius.all(5),
-                on_click=None,
-                ink=True
             ) if is_admin_view else ft.Container()
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -266,6 +266,6 @@ def profile_view(page: ft.Page, is_admin_view=False):
         ],
         expand=True
     )
+
     user_role = page.session.get("user_role") or "User"
     return create_main_layout(page, content, "/profile", user_role)
-              
