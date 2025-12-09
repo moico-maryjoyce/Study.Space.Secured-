@@ -1,0 +1,177 @@
+import flet as ft
+from flet import padding, border_radius, Icons
+from layouts import create_main_layout
+from components import PRIMARY_COLOR, create_action_button, TABLE_HEADER_BG
+from checkin_log import get_current_status, check_in, check_out, get_history, calculate_duration
+
+def check_in_out_view(page: ft.Page):
+    """Recreates the CHECK IN_OUT.png screen."""
+    
+    # Get current user (for demo, using "admin" - in real app, get from session)
+    current_user = "admin"
+    
+    # Status text control
+    status_text = ft.Text(
+        "",
+        size=18,
+        weight=ft.FontWeight.BOLD,
+    )
+    
+    # Time since check-in text control
+    time_since_text = ft.Text(
+        "",
+        size=16,
+        weight=ft.FontWeight.BOLD,
+        color="#6366F1",
+    )
+    
+    # Button control
+    button = ft.ElevatedButton(
+        "",
+        color=ft.Colors.WHITE,
+        width=200,
+        height=45
+    )
+    
+    # History table
+    history_table = ft.Container()
+    
+    def update_ui():
+        """Update UI with current status"""
+        current_status = get_current_status(current_user)
+        is_checked_in = current_status["status"] == "checked_in"
+        
+        # Update status text
+        status_text.value = "✓ You are currently checked in" if is_checked_in else "You are not checked in"
+        status_text.color = "#81C784" if is_checked_in else "#E57373"
+        
+        # Update time since check-in
+        if is_checked_in:
+            check_in_time = current_status.get("check_in_time", "")
+            time_since_text.value = f"Since: {check_in_time}"
+            time_since_text.visible = True
+        else:
+            time_since_text.visible = False
+        
+        # Update button
+        button.text = "Check out" if is_checked_in else "Check in"
+        button.bgcolor = "#E57373" if is_checked_in else "#81C784"
+        
+        # Update history table
+        history_records = get_history(current_user, limit=5)
+        history_data = [
+            (
+                record.get("status", "unknown"),
+                record.get("username", ""),
+                record.get("timestamp", ""),
+                record.get("duration", calculate_duration(record.get("check_in_time", "")))
+            )
+            for record in history_records
+        ]
+        
+        header_row = ft.Container(
+            ft.Row(
+                [
+                    ft.Container(ft.Text("Status", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.WHITE), width=150),
+                    ft.Container(ft.Text("User", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.WHITE), width=150),
+                    ft.Container(ft.Text("Time", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.WHITE), width=200),
+                    ft.Container(ft.Text("Duration", weight=ft.FontWeight.BOLD, size=13, color=ft.Colors.WHITE), expand=True),
+                ],
+                spacing=0,
+            ),
+            padding=padding.symmetric(horizontal=15, vertical=12),
+            bgcolor=TABLE_HEADER_BG,
+            border_radius=border_radius.only(top_left=8, top_right=8),
+        )
+
+        history_table.content = ft.Column(
+            [
+                header_row,
+                ft.ListView(
+                    [
+                        ft.Container(
+                            content=ft.Row(
+                                [
+                                    ft.Container(ft.Text(row[0], size=12, color=ft.Colors.BLACK87), width=150),
+                                    ft.Container(ft.Text(row[1], size=12, color=ft.Colors.BLACK87), width=150),
+                                    ft.Container(ft.Text(row[2], size=12, color=ft.Colors.GREY_700), width=200),
+                                    ft.Container(ft.Text(row[3], size=12, color=ft.Colors.BLACK87), expand=True),
+                                ],
+                                spacing=0,
+                            ),
+                            padding=padding.symmetric(horizontal=15, vertical=10),
+                            bgcolor=ft.Colors.WHITE,
+                        )
+                        for row in history_data
+                    ],
+                    spacing=0,
+                    expand=True
+                )
+            ],
+            spacing=0,
+        )
+        
+        page.update()
+    
+    def on_button_click(e):
+        """Handle check in/out button click"""
+        current_status = get_current_status(current_user)
+        is_checked_in = current_status["status"] == "checked_in"
+        
+        if is_checked_in:
+            check_out(current_user)
+        else:
+            check_in(current_user)
+        
+        update_ui()
+    
+    def on_refresh_click(e):
+        """Handle refresh button click"""
+        update_ui()
+    
+    button.on_click = on_button_click
+
+    check_in_box = ft.Container(
+        content=ft.Column(
+            [
+                status_text,
+                time_since_text,
+                ft.Container(height=15),
+                button
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER
+        ),
+        width=500,
+        height=180,
+        bgcolor=ft.Colors.WHITE,
+        border_radius=border_radius.all(10),
+        alignment=ft.alignment.center,
+        margin=ft.margin.only(bottom=30),
+        border=ft.border.all(1, ft.Colors.GREY_300),
+    )
+    
+    refresh_button = create_action_button("Refresh", Icons.REFRESH, on_click=on_refresh_click, color=PRIMARY_COLOR)
+
+    content = ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.Text("Check In/Out", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
+                    ft.Container(expand=True),
+                    refresh_button
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+            ),
+            ft.Row([check_in_box], alignment=ft.MainAxisAlignment.CENTER),
+            ft.Text("Check In/Out History", size=18, weight=ft.FontWeight.BOLD, color="#000000"),
+            history_table,
+            ft.Container(height=20),
+        ],
+    )
+    
+    # Initial UI update
+    update_ui()
+    
+    user_role = page.session.get("user_role") or "User"
+    return create_main_layout(page, content, "/checkinout", user_role)
