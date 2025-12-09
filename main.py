@@ -1,28 +1,88 @@
-from flask import Flask
+import flet as ft
 
-from app.views.login import bp as login_bp
-from app.views.dashboard import bp as dashboard_bp
-from app.views.check_inout import bp as check_inout_bp
-from app.views.my_profile import bp as profile_bp
-from app.views.my_profile_2 import bp as profile2_bp
-from app.views.users import bp as users_bp
-from app.views.audit_logs import bp as audit_bp
-from app.views.settings import bp as settings_bp
+# Import reusable components and layouts
+from layouts import create_main_layout
+from components import * # Imports constants and reusable widgets
 
-def create_app():
-    app = Flask(__name__)
+# Import all screen views
+from start_screen import start_screen
+from login_screens import login_screen
+from views.dashboard_view import dashboard_view
+from views.checkinout_view import check_in_out_view
+from views.profile_views import profile_view
+from views.users_view import users_view
+from views.auditlogs_view import audit_logs_view
+from views.settings_view import settings_view
+from users_data import get_user
 
-    app.register_blueprint(login_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(check_inout_bp)
-    app.register_blueprint(profile_bp)
-    app.register_blueprint(profile2_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(audit_bp)
-    app.register_blueprint(settings_bp)
 
-    return app
+def main(page: ft.Page):
+    page.title = "Study.Space.Secured! UI"
+    page.window_width = 1200
+    page.window_height = 800
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.theme = ft.Theme(font_family="Arial")
+
+    # Store current user and role in session
+    page.session.set("current_user", "")
+    page.session.set("user_role", "User")  # Default to User role
+
+    def route_change(route):
+        page.views.clear()
+
+        # Get current user role
+        current_user = page.session.get("current_user")
+        user_role = page.session.get("user_role") or "User"
+
+        # The initial landing page
+        if page.route == "/":
+            page.views.append(start_screen(page))
+        # Login and Sign-up
+        elif page.route == "/login":
+            page.views.append(login_screen(page, is_login=True))
+        elif page.route == "/signup":
+            page.views.append(login_screen(page, is_login=False))
+        # Internal App Screens
+        elif page.route == "/dashboard":
+            page.views.append(dashboard_view(page))
+        elif page.route == "/checkinout":
+            page.views.append(check_in_out_view(page))
+        elif page.route == "/profile":
+            # Default to User Profile
+            page.views.append(profile_view(page, is_admin_view=False))
+        elif page.route == "/profile/admin":
+            # Admin Profile view - admin only
+            if user_role == "Admin":
+                page.views.append(profile_view(page, is_admin_view=True))
+            else:
+                page.go("/dashboard")
+                return
+        elif page.route == "/users":
+            # Users management - admin only
+            if user_role == "Admin":
+                page.views.append(users_view(page))
+            else:
+                page.go("/dashboard")
+                return
+        elif page.route == "/auditlogs":
+            # Audit logs - admin only
+            if user_role == "Admin":
+                page.views.append(audit_logs_view(page))
+            else:
+                page.go("/dashboard")
+                return
+        elif page.route == "/settings":
+            page.views.append(settings_view(page))
+
+        page.update()
+
+    page.on_route_change = route_change
+    page.go(page.route)
+
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
+    # To run this structure, you need to execute the module like this:
+    # 1. Place all these files in a directory (e.g., 'flet_app/').
+    # 2. Run from the terminal: flet run flet_app/main.py
+    ft.app(target=main)
