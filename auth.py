@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 
 USERS_FILE = Path(__file__).parent / "users.json"
 LOGIN_ATTEMPTS_FILE = Path(__file__).parent / "data" / "login_attempts.json"
+# Lockout policy
+MAX_FAILED_ATTEMPTS = 3
+LOCKOUT_MINUTES = 15
 
 
 def _load_users():
@@ -56,7 +59,7 @@ def _is_account_locked(username: str) -> tuple:
     attempt_data = attempts[key]
     failed_count = attempt_data.get("failed_count", 0)
     
-    if failed_count < 5:
+    if failed_count < MAX_FAILED_ATTEMPTS:
         return False, 0
     
     # Check if lockout period has expired (15 minutes)
@@ -64,7 +67,7 @@ def _is_account_locked(username: str) -> tuple:
     if last_attempt_str:
         try:
             last_attempt = datetime.fromisoformat(last_attempt_str)
-            lockout_time = last_attempt + timedelta(minutes=15)
+            lockout_time = last_attempt + timedelta(minutes=LOCKOUT_MINUTES)
             now = datetime.now()
             
             if now < lockout_time:
@@ -100,8 +103,8 @@ def _record_failed_attempt(username: str):
     attempts[key]["failed_count"] = attempts[key].get("failed_count", 0) + 1
     attempts[key]["last_attempt_time"] = datetime.now().isoformat()
     
-    # Set locked_at timestamp if just reached 5 attempts
-    if attempts[key]["failed_count"] == 5:
+    # Set locked_at timestamp if just reached MAX_FAILED_ATTEMPTS
+    if attempts[key]["failed_count"] == MAX_FAILED_ATTEMPTS:
         attempts[key]["locked_at"] = datetime.now().isoformat()
     
     _save_login_attempts(attempts)
@@ -156,24 +159,28 @@ def check_credentials(username: str, password: str) -> tuple:
     """Check login credentials.
     Returns (success: bool, message: str, remaining_lockout_time: int)"""
     key = username.strip().lower()
-    
-    # Check if account is locked
-    is_locked, remaining_minutes = _is_account_locked(key)
-    if is_locked:
-        return False, f"Account locked. Try again in {remaining_minutes} minutes.", remaining_minutes
-    
+
     users = _load_users()
     if key not in users:
         _record_failed_attempt(key)
         attempts = _load_login_attempts()
         failed_count = attempts.get(key, {}).get("failed_count", 1)
-        return False, f"Invalid username or password. Attempt {failed_count}/5", 0
+        return False, f"Invalid username or password. Attempt {failed_count}/{MAX_FAILED_ATTEMPTS}", 0
+
+    # Admin/user manual lock
+    if users[key].get("locked"):
+        return False, "Account locked by admin. Contact administrator.", 0
+
+    # Check lockout from failed attempts
+    is_locked, remaining_minutes = _is_account_locked(key)
+    if is_locked:
+        return False, f"Account locked. Try again in {remaining_minutes} minutes.", remaining_minutes
     
     if users[key].get("password_hash") != _hash_password(password):
         _record_failed_attempt(key)
         attempts = _load_login_attempts()
         failed_count = attempts.get(key, {}).get("failed_count", 1)
-        return False, f"Invalid username or password. Attempt {failed_count}/5", 0
+        return False, f"Invalid username or password. Attempt {failed_count}/{MAX_FAILED_ATTEMPTS}", 0
     
     # Credentials valid - reset attempts
     _reset_login_attempts(key)
