@@ -1,125 +1,67 @@
+import sys
+from pathlib import Path
+
+# Ensure project root on sys.path so local imports resolve when executed directly
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import flet as ft
 from flet import padding, border_radius, Icons
 from layouts import create_main_layout
-from components import SUCCESS_COLOR
+from components import PRIMARY_COLOR, SUCCESS_COLOR, TEXT_COLOR, LIGHT_TEXT, BG_WHITE, BG_LIGHT, BORDER_COLOR, TABLE_HEADER_BG
 
 def settings_view(page: ft.Page):
-    """Recreates the Settings.png screen with improved readability and colors."""
+    """Clean Security Settings view matching app design."""
 
-    is_otp_enabled = ft.Ref[ft.Switch]()
+    # Theme toggle state stored in session
+    dark_mode = bool(page.session.get("dark_mode")) if page.session.contains_key("dark_mode") else False
+    theme_switch = ft.Ref[ft.Switch]()
 
-    security_card = ft.Card(
-        content=ft.Container(
-            content=ft.Column(
+    def handle_theme_toggle(e):
+        val = theme_switch.current.value if theme_switch.current else False
+        page.session.set("dark_mode", val)
+        page.theme_mode = ft.ThemeMode.DARK if val else ft.ThemeMode.LIGHT
+        page.update()
+    
+    # Apply theme on load
+    page.theme_mode = ft.ThemeMode.DARK if dark_mode else ft.ThemeMode.LIGHT
+
+    # Dark mode card
+    dark_mode_card = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Icon(Icons.DARK_MODE, color=PRIMARY_COLOR, size=20),
+                ft.Text("Dark Mode", weight=ft.FontWeight.BOLD, size=14, color=TEXT_COLOR),
+            ], spacing=10),
+            ft.Container(height=12),
+            ft.Row(
                 [
-                    ft.Text("Security Settings", size=24, weight=ft.FontWeight.BOLD, color="#007BFF"),
-                    ft.Container(height=20),
-                    ft.Row(
-                        [
-                            # Left Column: Two-Factor Authentication
-                            ft.Column(
-                                [
-                                    ft.Row([
-                                        ft.Icon(Icons.LOCK_OUTLINED, color="#007BFF", size=24),
-                                        ft.Text("Two-Factor Authentication (OTP)", weight=ft.FontWeight.BOLD, size=16, color="#333333"),
-                                    ], spacing=10),
-                                    ft.Row(
-                                        [
-                                            ft.Text("Enable OTP Verification", size=14, color="#555555"),
-                                            ft.Switch(ref=is_otp_enabled, value=False)
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                                    ),
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Text("• OTP Length: 6 digits", size=13, color="#333333"),
-                                                ft.Text("• OTP Expiry: 5 minutes", size=13, color="#333333"),
-                                                ft.Text("• OTP delivery: Email / SMS", size=13, color="#333333"),
-                                            ]
-                                        ),
-                                        padding=padding.all(10),
-                                        bgcolor="#F0F4F8",
-                                        border_radius=border_radius.all(5),
-                                        width=250,
-                                        margin=ft.margin.only(left=20)
-                                    ),
-                                ],
-                                expand=True
-                            ),
-                            ft.VerticalDivider(width=1, color="#E0E0E0"),
-                            # Right Column: Login Alerts
-                            ft.Column(
-                                [
-                                    ft.Row([
-                                        ft.Icon(Icons.NOTIFICATIONS_ACTIVE_OUTLINED, color="#E74C3C", size=24),
-                                        ft.Text("Login Alerts & Security Notifications", weight=ft.FontWeight.BOLD, size=16, color="#333333"),
-                                    ], spacing=10),
-                                    ft.Text("Suspicious Login Detection", size=14, color="#555555"),
-                                    ft.Container(
-                                        content=ft.Row([
-                                            ft.Icon(Icons.CHECK, color=SUCCESS_COLOR, size=20),
-                                            ft.Text("Enabled", weight=ft.FontWeight.BOLD, color=SUCCESS_COLOR, size=13),
-                                            ft.Text("by system", size=12, color="#888888"),
-                                        ], spacing=5),
-                                        padding=padding.symmetric(horizontal=10, vertical=8),
-                                        bgcolor="#E8F5E9",
-                                        border_radius=border_radius.all(5),
-                                    ),
-                                    ft.Container(
-                                        content=ft.Row([
-                                            ft.Icon(Icons.INFO_OUTLINE, color="#27AE60", size=18),
-                                            ft.Text("We monitor unusual login behavior such as:", size=13, color="#27AE60"),
-                                        ], spacing=5),
-                                        margin=ft.margin.only(top=10)
-                                    ),
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Text("• New locations", size=13, color="#555555"),
-                                                ft.Text("• Unusual login times", size=13, color="#555555"),
-                                                ft.Text("• Repeated attempts", size=13, color="#555555"),
-                                            ]
-                                        ),
-                                        margin=ft.margin.only(left=20)
-                                    )
-                                ],
-                                expand=True
-                            ),
-                        ],
-                        spacing=30
-                    ),
-                    ft.Container(height=30),
-                    # Auto Logout
-                    ft.Text("Auto Logout", size=18, weight=ft.FontWeight.BOLD, color="#007BFF"),
-                    ft.Container(
-                        content=ft.Text(
-                            "You will be logged out after **15 minutes** of inactivity.",
-                            size=13,
-                            color="#333333",
-                            selectable=True
-                        ),
-                        padding=padding.all(10),
-                        bgcolor="#F0F4F8",
-                        border_radius=border_radius.all(5),
-                        width=400,
-                        margin=ft.margin.only(left=20, top=5)
-                    ),
+                    ft.Text("Toggle dark theme", size=12, color=LIGHT_TEXT),
+                    ft.Switch(ref=theme_switch, value=dark_mode, on_change=handle_theme_toggle)
                 ],
-                expand=True
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
             ),
-            padding=30,
-            bgcolor=ft.Colors.WHITE,
-        ),
-        elevation=2,
-        expand=True
+        ], spacing=0),
+        padding=padding.all(16),
+        bgcolor=BG_WHITE,
+        border_radius=border_radius.all(8),
+        border=ft.border.all(1, BORDER_COLOR),
     )
 
-    content = ft.Column(
-        [
-            security_card,
-            ft.Container(height=20),
-        ],
-    )
+    content = ft.Column([
+        # Header
+        ft.Row([
+            ft.Text("Security Settings", size=20, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+        ]),
+        ft.Container(height=20),
+        
+        # Theme Section
+        ft.Text("Appearance", size=14, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+        ft.Container(height=12),
+        dark_mode_card,
+        
+    ], spacing=0, scroll=ft.ScrollMode.AUTO)
+    
     user_role = page.session.get("user_role") or "User"
     return create_main_layout(page, content, "/settings", user_role)
