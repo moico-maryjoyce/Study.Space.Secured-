@@ -190,6 +190,33 @@ flet run main.py
 
 ---
 
+# **Visual Preview**
+
+## Admin View (Management & Monitoring)
+This view provides exclusive access to user management and security features.
+
+![Start Screen](<assets/Start Screen.png>)
+![Login](<assets/Log In.png>)
+![Dashboard](<assets/Dashboard - Admin.png>)
+![Check InOut](<assets/Check InOut.png>)
+![My Profile](<assets/My Profile.png>)
+![User](<assets/User Management.png>)
+![Audit Logs](<assets/Audit Logs.png>)
+![Settings](<assets/Settings.png>)
+
+## User View
+This view focuses on the user's core functions: logging in, creating acc, check-in/out, and personal settings.
+
+![Start Screen](<assets/Start Screen.png>)
+![Login](<assets/Log In.png>)
+![Create Acc](<assets/Create Acc Page.png>)
+![Dashboard](<assets/Dashboard - User.png>)
+![Check InOut](<assets/Check InOut - User.png>)
+![My Profile](<assets/My Profile - User.png>)
+![Settings](<assets/Settings.png>)
+
+---
+
 # **Testing Summary**
 
 ## How to Run Tests
