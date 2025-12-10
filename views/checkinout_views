@@ -6,9 +6,8 @@ from checkin_log import get_current_status, check_in, check_out, get_history, ca
 
 def check_in_out_view(page: ft.Page):
     """Recreates the CHECK IN_OUT.png screen."""
-    
-    # Get current user (for demo, using "admin" - in real app, get from session)
-    current_user = "admin"
+    # Use the signed-in user from session so each user only sees their own logs
+    current_user = (page.session.get("current_user") or "").lower()
     
     # Status text control
     status_text = ft.Text(
@@ -38,6 +37,20 @@ def check_in_out_view(page: ft.Page):
     
     def update_ui():
         """Update UI with current status"""
+        if not current_user:
+            status_text.value = "Please log in to use Check In/Out"
+            status_text.color = ft.Colors.RED_700
+            time_since_text.visible = False
+            button.text = "Log in first"
+            button.bgcolor = ft.Colors.GREY_400
+            button.disabled = True
+            history_table.content = ft.Container(
+                ft.Text("No history available. Log in to view your records.", color=ft.Colors.GREY_600),
+                padding=padding.all(16),
+            )
+            page.update()
+            return
+
         current_status = get_current_status(current_user)
         is_checked_in = current_status["status"] == "checked_in"
         
@@ -115,6 +128,9 @@ def check_in_out_view(page: ft.Page):
     
     def on_button_click(e):
         """Handle check in/out button click"""
+        if not current_user:
+            return
+
         current_status = get_current_status(current_user)
         is_checked_in = current_status["status"] == "checked_in"
         
