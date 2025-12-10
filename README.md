@@ -7,7 +7,7 @@ Built with Python + Flet (Server-Driven UI)
 - **CS 319 – Information Assurance and Security**
 - **CS 3110 – Software Engineering 1**
 
-## Developed by: Team Rush
+## Developed by: Team Rush 3-in-1
 - Moico, Mary Joyce N.
 - Oronan, Senbie
 - Quite, Rona Mae M.
