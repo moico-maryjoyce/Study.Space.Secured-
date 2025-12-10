@@ -211,9 +211,9 @@ python -m pytest
 
 | Member | Role | Contributions |
 | :--- | :--- | :--- |
-| **Rona Mae M. Quite** | UI/UX & Page Designer | Designed Flet pages, navigation, theme system |
+| **Senbie Oronan** | UI/UX & Page Designer | Designed Flet pages, navigation, theme system |
 | **Mary Joyce N. Moico** | Backend & Security | RBAC, bcrypt hashing, authentication logic |
-| **Senbie Oronan** | Testing & Documentation | Test cases, audit log validation, writes SRS/README |
+| **Rona Mae M. Quite** | Testing & Documentation | Test cases, audit log validation, writes SRS/README |
 
 ---
 
@@ -239,12 +239,12 @@ python -m pytest
 # **Individual Reflection**
 
 ## Mary Joyce N. Moico
+The development of Study.Space.Secured! was a difficult but at the same time a very rewarding experience that granted our team the opportunity to use and mix concepts from Application Development, Software Engineering, and Information Assurance into one working system. Even though the time was limited, we persevered as a team and were able to provide an application for study-space access and monitoring that was secure and based on Python and Flet. We also learnt that the project had four major components: planning, teamwork, security-aware design. The features that we implemented - role-based access control, authentication, audit logging, and check-in/check-out tracking, were all together us to better appreciate the fact that real-world systems must weigh the trade-off between usability and security. Using Flet’s server-driven UI also helped us to see how the use of emerging technologies can ease development while still allowing control over the critical workflows. But more than anything else, this project was a testament to the power of collaboration. Each of the contributors brought in their strengths, and even though time was a factor, we still provided support to one another to have the system completed. Our team name, Team Rush 3-in-1, actually summarized our journey very well, fast working, combining ideas into one system, and delivering as one team. Study.Space.Secured! is a demonstration that when there is teamwork, dedication, and a shared responsibility, even quality outputs in a short period are possible.
 
 ## Senbie Oronan
 
 ## Rona Mae M. Quite
-
-My main emphasis was the development of the user interface and easy navigation with the help of the Flet library. The main dilemma was to comply with the usability specification, namely to make the procedure of the login and the check in process as fast and as user-friendly as possible. After a short time, I discovered the limitations and strengths of the Server-Driven UI (SDUI) architecture and directed my design toward the minimalistic and accessible. The name of the team Rush 3-in-1 is actually a reflection of the way the team developed, the project needed strict high-speed development to be completed on time. My task included the general page design and navigation. The project has taught me the principles of breaking down complicated security needs into clean and simple user experience, demonstrating that a powerful functionality does not need complicated graphics. The adherence to the Flet framework was effective, and thus, we were able to make the system cross-platform compatible. The high-paced development cycle eventually helped me to hone my priorities when it comes to prioritizing key UI features under stress.
+It was important that I played a key role in making the Study.Space.Secured! system verifiable, reliable as well as well-documented. This included the creation of all the test cases, validation of the non-functional requirements, and writing of Sz S, the Software Requirements Specification, and the README. The name of the team, in fact, Rush 3-in-1, accurately represents how we were developing it since we had to do the testing and documentation in a high-speed and focused way in order to meet our deadlines. One of the priorities was to verify the integrity of the Audit Log and the performance, and the complex queries should be returned in less than 2 seconds. To make sure the code base was progressing towards the aggressive goal of unit test coverage of at least 70 percent and to ensure our CI tests ran fast, I needed to make sure the code base was moving along. The project has also helped me to learn that testing and documentation are not only a conclusion but the necessary means of implementing security policies (such as the login lockout) and ensuring the overall quality and maintainability of the system in the future.
 
 
 
