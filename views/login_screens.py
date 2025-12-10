@@ -19,6 +19,8 @@ def login_screen(page: ft.Page, is_login=True):
         fill_color="#F5F5F5",
         border_color="#E0E0E0",
         label_style=ft.TextStyle(color=TEXT_COLOR, size=13),
+        text_style=ft.TextStyle(color="#000000", size=13),
+        hint_style=ft.TextStyle(color=TEXT_COLOR, size=13),
     )
     password_field = ft.TextField(
         label="Password",
@@ -31,6 +33,8 @@ def login_screen(page: ft.Page, is_login=True):
         fill_color="#F5F5F5",
         border_color="#E0E0E0",
         label_style=ft.TextStyle(color=TEXT_COLOR, size=13),
+        text_style=ft.TextStyle(color="#000000", size=13),
+        hint_style=ft.TextStyle(color=TEXT_COLOR, size=13),
     )
     email_field = ft.TextField(
         label="E-mail",
@@ -41,12 +45,8 @@ def login_screen(page: ft.Page, is_login=True):
         fill_color="#F5F5F5",
         border_color="#E0E0E0",
         label_style=ft.TextStyle(color=TEXT_COLOR, size=13),
-    )
-    role_dropdown = ft.Dropdown(
-        options=[ft.dropdown.Option("User"), ft.dropdown.Option("Admin")],
-        value="User",
-        width=320,
-        label="Role"
+        text_style=ft.TextStyle(color="#000000", size=13),
+        hint_style=ft.TextStyle(color=TEXT_COLOR, size=13),
     )
 
     def show_snack(message: str, success: bool = True):
@@ -61,8 +61,12 @@ def login_screen(page: ft.Page, is_login=True):
             show_snack("Please enter username and password", success=False)
             return
         
-        # Check credentials (returns tuple: success, message, remaining_lockout_time)
-        success, message, remaining_lockout = check_credentials(username, password)
+        try:
+            # Check credentials (returns tuple: success, message, remaining_lockout_time)
+            success, message, remaining_lockout = check_credentials(username, password)
+        except Exception as ex:
+            show_snack(f"Login error: {ex}", success=False)
+            return
         
         if success:
             show_snack(message, success=True)
@@ -87,17 +91,26 @@ def login_screen(page: ft.Page, is_login=True):
         username = username_field.value.strip()
         password = password_field.value
         email = email_field.value.strip()
-        role = role_dropdown.value or "User"
+
         if not username or not password or not email:
             show_snack("Please fill in username, email and password", success=False)
             return
-        created = add_user(username, password, email)
+
+        try:
+            created = add_user(username, password, email)
+        except Exception as ex:
+            show_snack(f"Sign up failed: {ex}", success=False)
+            return
+
         if created:
-            # Add role and other user metadata to users.json
-            add_user_record(username, name=username, email=email, role=role)
-            show_snack("Account created. You may now log in.")
-            log_activity("user_created", username, f"New user {username} created with role {role}")
-            page.go("/login")
+            try:
+                # Add user metadata (default role is User) and attempt DB write
+                add_user_record(username, name=username, email=email)
+                show_snack("Account created. You may now log in.")
+                log_activity("user_created", username, f"New user {username} created with default role")
+                page.go("/login")
+            except Exception as ex:
+                show_snack(f"User created but metadata save failed: {ex}", success=False)
         else:
             show_snack("Username already exists", success=False)
 
@@ -127,7 +140,6 @@ def login_screen(page: ft.Page, is_login=True):
 
     if not is_login:
         controls.insert(3, email_field)
-        controls.insert(4, role_dropdown)
 
     controls.extend([
         ft.Container(height=25),
