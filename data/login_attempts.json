@@ -1,0 +1,27 @@
+{
+  "bobita": {
+    "failed_count": 0,
+    "last_attempt_time": "",
+    "locked_at": ""
+  },
+  "admin": {
+    "failed_count": 0,
+    "last_attempt_time": "",
+    "locked_at": ""
+  },
+  "admin11": {
+    "failed_count": 0,
+    "last_attempt_time": "",
+    "locked_at": ""
+  },
+  "fraarroyo": {
+    "failed_count": 0,
+    "last_attempt_time": "",
+    "locked_at": ""
+  },
+  "asdasd": {
+    "failed_count": 1,
+    "last_attempt_time": "2025-12-09T19:03:56.581116",
+    "locked_at": ""
+  }
+}
