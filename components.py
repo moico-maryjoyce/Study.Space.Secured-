@@ -2,21 +2,22 @@ import flet as ft
 from flet import padding, border_radius, border, Icons
 
 # Color Palette
-PRIMARY_COLOR = "#4A70A9"
-SECONDARY_COLOR = "#8FABD4"
-ACCENT_COLOR = "#EFECE3"
+PRIMARY_COLOR = "#A895C9"
+SECONDARY_COLOR = "#C9C0DB"
+ACCENT_COLOR = "#FFF7D6"
 TEXT_COLOR = "#333333"
 LIGHT_TEXT = "#666666"
 BG_WHITE = "#FFFFFF"
-BG_LIGHT = "#F8F6F2"
-BORDER_COLOR = "#E5DDD5"
-SUCCESS_COLOR = "#4CAF50"
-WARNING_COLOR = "#FFC107"
-DANGER_COLOR = "#FF6B6B"
-TABLE_HEADER_BG = "#8FABD4"
-TABLE_BORDER_COLOR = "#E5DDD5"
-ADMIN_ROLE_COLOR = "#FF6B6B"
-USER_ROLE_COLOR = "#4CAF50"
+BG_LIGHT = "#F0F4F7"
+BG_TINT = "#F7F4FB"
+BORDER_COLOR = "#D3D3D3"
+SUCCESS_COLOR = "#81C784"
+WARNING_COLOR = "#FFD54F"
+DANGER_COLOR = "#E57373"
+TABLE_HEADER_BG = "#9B7CB5"
+TABLE_BORDER_COLOR = "#D3D3D3"
+ADMIN_ROLE_COLOR = "#E57373"
+USER_ROLE_COLOR = "#81C784"
 
 # Spacing
 SPACING_SM = 8
@@ -213,3 +214,21 @@ def create_badge(text: str, color: str = PRIMARY_COLOR, text_color: str = ft.Col
 def create_divider(height: int = 1, color: str = BORDER_COLOR):
     """Creates a divider line."""
     return ft.Container(height=height, bgcolor=color)
+
+def create_action_button(label: str, icon: str = None, on_click=None, color: str = PRIMARY_COLOR):
+    """Creates a styled action button with icon and text."""
+    return ft.ElevatedButton(
+        content=ft.Row(
+            [
+                ft.Icon(icon, size=18, color=ft.Colors.WHITE) if icon else None,
+                ft.Text(label, size=12, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ],
+            spacing=8,
+        ),
+        bgcolor=color,
+        style=ft.ButtonStyle(
+            padding=padding.symmetric(horizontal=16, vertical=10),
+            shape=ft.RoundedRectangleBorder(radius=6),
+        ),
+        on_click=on_click,
+    )
