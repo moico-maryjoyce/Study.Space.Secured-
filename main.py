@@ -13,7 +13,7 @@ from views.profile_views import profile_view
 from views.users_view import users_view
 from views.auditlogs_view import audit_logs_view
 from views.settings_view import settings_view
-from users_data import get_user
+from users_data import get_user, ensure_default_admin_user
 
 
 def main(page: ft.Page):
@@ -23,6 +23,9 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme = ft.Theme(font_family="Arial")
+
+    # Seed a default admin account if none exists yet
+    ensure_default_admin_user()
 
     # Store current user and role in session
     page.session.set("current_user", "")
@@ -82,7 +85,5 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    # To run this structure, you need to execute the module like this:
-    # 1. Place all these files in a directory (e.g., 'flet_app/').
-    # 2. Run from the terminal: flet run flet_app/main.py
+
     ft.app(target=main)
