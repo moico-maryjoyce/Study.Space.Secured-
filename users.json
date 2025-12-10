@@ -7,7 +7,7 @@
     "status": "Active",
     "twofa": true,
     "last_login": "2025-12-08 10:30:00",
-    "locked": true
+    "locked": false
   },
   "moico": {
     "password_hash": "0904d0a534fcf3d0b19166b1aca415465679c1847314f649d86fc7907533579b",
@@ -27,7 +27,7 @@
     "status": "Active",
     "twofa": false,
     "last_login": "2025-12-08 08:45:00",
-    "locked": false
+    "locked": true
   },
   "nami": {
     "password_hash": "489bca2e05d4488669faf0d488b83f79459460030bf337518ab995dc822bb24d",
@@ -93,7 +93,7 @@
     "password_hash": "4a9ca4596692e94f9d2912b06a0d007564a22ee750339a6021c2392149b25d6d",
     "email": "hhhhh@gmail.com",
     "role": "Admin",
-    "name": "Chan",
+    "name": "Chann",
     "status": "Active",
     "twofa": false,
     "last_login": "",
@@ -102,10 +102,121 @@
   "bobita": {
     "password_hash": "9e69e7e29351ad837503c44a5971edebc9b7e6d8601c89c284b1b59bf37afa80",
     "email": "bob@gmail.com",
-    "name": "Bobita"
+    "name": "Bobita",
+    "locked": false
   },
   "ssss": {
     "password_hash": "8bb0cf6eb9b17d0f7d22b456f121257dc1254e1f01665370476383ea776df414",
     "email": "aaaagmail.com"
+  },
+  "admin": {
+    "password_hash": "e86f78a8a3caf0b60d8e74e5942aa6d86dc150cd3c03338aef25b7d2d7e3acc7",
+    "email": "admin@gmail.com",
+    "name": "admin",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "admin1": {
+    "password_hash": "8e385e42da2b35a39fb7e306db8926eadd42e121055f7ce816f16cf9540e44c4",
+    "email": "admin1@gmail.com",
+    "name": "admin1",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "admin11": {
+    "password_hash": "686dd4419d5da11febc928e2f4df2daa16dd8e3d6b8201b80abf99a32f4d4b83",
+    "email": "admin@gmail.com",
+    "name": "admin11",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "adminsembs": {
+    "password_hash": "69ace387e8b551105ca019f99a903aa8206a5e6e232eb199a19815b8922622c2",
+    "email": "senbieoronan@gmail.com",
+    "name": "adminsembs",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "user1": {
+    "password_hash": "0a041b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90",
+    "email": "user1@gmail.com",
+    "name": "user1",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": true
+  },
+  "admin0": {
+    "password_hash": "04890323ef89a1f72b7cff409bf4a0704c004e445d37ac86669f1c472c929034",
+    "email": "admin0@gmail.com",
+    "name": "admin0",
+    "role": "Admin",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "user0": {
+    "password_hash": "3f92107747fcccc58db838122c14149b1c6e5a81ad7f45b91f1674017f03090f",
+    "email": "user0@gmail.com",
+    "name": "user0",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "fraarroyo": {
+    "password_hash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "email": "fraarroyo@my.cspc.edu.ph",
+    "name": "fraarroyo",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "asdasdasd": {
+    "password_hash": "62dc29d82c475ca8bf3312ae6f900632d5b153a224f3ad3e91747e0fa631492b",
+    "email": "sadasd@gmai.com",
+    "name": "asdasdasd",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "sembs": {
+    "password_hash": "8bfb66a7912149af14517256943ecc8dd24d9a30ac2cc0174d562cbb386523ff",
+    "email": "senbieoronan@gmail.com",
+    "name": "sembs",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
+  },
+  "user3": {
+    "password_hash": "5860faf02b6bc6222ba5aca523560f0e364ccd8b67bee486fe8bf7c01d492ccb",
+    "email": "user3@gmail.com",
+    "name": "user3",
+    "role": "User",
+    "status": "Active",
+    "twofa": false,
+    "last_login": "",
+    "locked": false
   }
 }
