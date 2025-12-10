@@ -1,15 +1,38 @@
 import flet as ft
 from flet import padding, border_radius, border
 from layouts import create_main_layout
-from components import create_info_card
-from activity_log import get_recent_activities
+from components import create_info_card, TABLE_HEADER_BG
+from activity_log import get_recent_activities, count_anomalies
+from users_data import list_users
+from checkin_log import (
+    get_active_checkins_count,
+    get_checkins_today_count,
+    get_user_checkins_count,
+)
 
 def dashboard_view(page: ft.Page):
     """Recreates the DASHBOARD.png screen."""
-    activities = get_recent_activities(limit=5)
+    current_user = (page.session.get("current_user") or "").lower()
+
+    user_role = page.session.get("user_role") or "User"
+
+    # Activity list:
+    # - Admin: show all recent activities
+    # - User: show only their own
+    activities = get_recent_activities(limit=50)
+    if user_role == "Admin":
+        filtered = activities
+    else:
+        filtered = [a for a in activities if a.get("username", "").lower() == current_user]
+
     activity_data = [
-        (activity["event_type"], activity["username"], activity["timestamp"], activity["description"])
-        for activity in activities
+        (
+            activity.get("event_type", ""),
+            activity.get("username", ""),
+            activity.get("timestamp", ""),
+            activity.get("description", ""),
+        )
+        for activity in filtered[:5]
     ]
 
     header_row = ft.Container(
@@ -23,7 +46,7 @@ def dashboard_view(page: ft.Page):
             spacing=0,
         ),
         padding=padding.symmetric(horizontal=15, vertical=12),
-        bgcolor="#007BFF",
+        bgcolor=TABLE_HEADER_BG,
         border_radius=border_radius.only(top_left=8, top_right=8),
     )
 
@@ -60,23 +83,40 @@ def dashboard_view(page: ft.Page):
         expand=True,
     )
 
+    # Metrics: for admin show real counts; for non-admin show only their check-in count
+    if user_role == "Admin":
+        total_users = str(len(list_users()))
+        active_sessions = str(get_active_checkins_count())
+        checkins_today = str(get_checkins_today_count())
+        anomalies = str(count_anomalies())
+        metrics_row = ft.Row(
+            [
+                create_info_card("Total Users", total_users),
+                create_info_card("Active Sessions", active_sessions),
+                create_info_card("Check-ins Today", checkins_today),
+            ],
+            spacing=20,
+            wrap=True,
+        )
+    else:
+        my_checkins = str(get_user_checkins_count(current_user))
+        metrics_row = ft.Row(
+            [
+                create_info_card("My Check-ins", my_checkins),
+            ],
+            spacing=20,
+            wrap=True,
+        )
+
     content = ft.Column(
         [
-            ft.Text("Dashboard", size=20, weight=ft.FontWeight.BOLD, color="#007BFF"),
-            ft.Row(
-                [
-                    create_info_card("Total Users", "1"),
-                    create_info_card("Active Sessions", "1"),
-                    create_info_card("Check-ins Today", "1"),
-                    create_info_card("Anomalies Detected", "0"),
-                ],
-                spacing=20,
-            ),
+            ft.Text("Dashboard", size=20, weight=ft.FontWeight.BOLD, color="#000000"),
+            metrics_row,
             ft.Container(height=30),
-            ft.Text("Recent Activity", size=18, weight=ft.FontWeight.BOLD, color="#007BFF"),
+            ft.Text("Recent Activity", size=18, weight=ft.FontWeight.BOLD, color="#000000"),
             activity_table,
+            ft.Container(height=20),
         ],
-        expand=True
     )
 
     user_role = page.session.get("user_role") or "User"
