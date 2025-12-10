@@ -1,271 +1,471 @@
+import sys
+from pathlib import Path
+
+# Ensure project root is on sys.path so imports like `layouts` resolve even when this
+# module is executed in isolation.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import flet as ft
 from flet import padding, border_radius, Icons, ControlState
 from layouts import create_main_layout
-from components import create_text_field, create_admin_button, PRIMARY_COLOR, SECONDARY_COLOR
+from components import (create_text_field, create_admin_button, PRIMARY_COLOR, 
+                        SECONDARY_COLOR, TEXT_COLOR, BG_LIGHT, BG_WHITE, 
+                        BORDER_COLOR, LIGHT_TEXT, create_button)
 from activity_log import log_activity
+from users_data import get_user, _load_users, _save_users
+from auth import check_credentials, _hash_password
 
 def profile_view(page: ft.Page, is_admin_view=False):
-    # Create a container to hold the profile picture
-    profile_picture = ft.Container(
-        ft.Icon(Icons.PERSON, size=80, color=ft.Colors.BLACK54),
-        width=120,
-        height=150,
-        border_radius=border_radius.all(75),
-        bgcolor=SECONDARY_COLOR,
-        alignment=ft.alignment.center
+    """
+    Improved MY PROFILE view for both User and Admin.
+    Displays actual user data and allows profile updates.
+    """
+    
+    # Require an authenticated user to load profile data
+    current_user = (page.session.get("current_user") or "").strip().lower()
+    user_role = page.session.get("user_role") or "User"
+    if not current_user:
+        page.snack_bar = ft.SnackBar(ft.Text("Please log in to view your profile"), bgcolor=ft.Colors.RED_700)
+        page.snack_bar.open = True
+        page.update()
+        page.go("/login")
+        return
+
+    user_data = get_user(current_user) or {}
+    user_name = user_data.get("name", current_user)
+    user_email = user_data.get("email", "")
+    
+    # Create editable fields - Compact padding, prefilled with current user data
+    username_field = ft.TextField(
+        value=current_user,
+        label="Username",
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=12, vertical=8),
+        text_style=ft.TextStyle(size=12, color=TEXT_COLOR),
     )
     
-    # Create text field references (these return wrappers from your component)
-    name_field_col = create_text_field("Name", hint_text="Enter new username", width=600)
-    email_field_col = create_text_field("Email", hint_text="Enter new email", width=600)
-    current_password_field_col = create_text_field("Current Password:", password=True, width=600)
-    new_password_field_col = create_text_field("New Password:", password=True, width=600)
+    name_field = ft.TextField(
+        value=user_name,
+        label="Full Name",
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=12, vertical=8),
+        text_style=ft.TextStyle(size=12, color=TEXT_COLOR),
+    )
+    
+    email_field = ft.TextField(
+        value=user_email,
+        label="Email Address",
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=12, vertical=8),
+        text_style=ft.TextStyle(size=12, color=TEXT_COLOR),
+    )
+    
+    current_password_field = ft.TextField(
+        label="Current Password",
+        password=True,
+        can_reveal_password=True,
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=12, vertical=8),
+        text_style=ft.TextStyle(size=12, color=TEXT_COLOR),
+    )
+    
+    new_password_field = ft.TextField(
+        label="New Password",
+        password=True,
+        can_reveal_password=True,
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=14, vertical=12),
+        text_style=ft.TextStyle(size=13, color=TEXT_COLOR),
+    )
+    
+    confirm_password_field = ft.TextField(
+        label="Confirm Password",
+        password=True,
+        can_reveal_password=True,
+        border=ft.InputBorder.OUTLINE,
+        filled=True,
+        fill_color=BG_WHITE,
+        border_color=BORDER_COLOR,
+        content_padding=padding.symmetric(horizontal=14, vertical=12),
+        text_style=ft.TextStyle(size=13, color=TEXT_COLOR),
+    )
+    
+    # Small labels that we update after saves
+    display_username = ft.Text(current_user, size=10, color=TEXT_COLOR)
+    display_role = ft.Text(user_role, size=9, color=ft.Colors.WHITE, weight=ft.FontWeight.W_600)
 
-    # Helper: recursively find a TextField inside any wrapper
-    def find_text_field(control):
-        if control is None:
-            return None
-        if isinstance(control, ft.TextField):
-            return control
-        if hasattr(control, "content") and control.content is not None:
-            tf = find_text_field(control.content)
-            if tf:
-                return tf
-        if hasattr(control, "controls") and control.controls:
-            for child in control.controls:
-                tf = find_text_field(child)
-                if tf:
-                    return tf
-        return None
+    def on_update_profile(e):
+        # Validate inputs
+        new_username = username_field.value.strip().lower()
+        new_name = name_field.value.strip()
+        new_email = email_field.value.strip()
+        current_password = current_password_field.value
+        new_password = new_password_field.value
+        confirm_password = confirm_password_field.value
+        if not new_username:
+            page.snack_bar = ft.SnackBar(ft.Text("Username cannot be empty"), bgcolor=ft.Colors.RED_700)
+            page.snack_bar.open = True
+            page.update()
+            return
+        
+        # Check if current password is required (if changing password or username)
+        if (new_password or new_username != current_user.lower()) and not current_password:
+            page.snack_bar = ft.SnackBar(ft.Text("Current password required for security changes"), bgcolor=ft.Colors.RED_700)
+            page.snack_bar.open = True
+            page.update()
+            return
+        
+        # Verify current password if needed
+        if current_password:
+            success, msg, _ = check_credentials(current_user, current_password)
+            if not success:
+                page.snack_bar = ft.SnackBar(ft.Text("Current password is incorrect"), bgcolor=ft.Colors.RED_700)
+                page.snack_bar.open = True
+                page.update()
+                return
+        
+        # Validate password change if provided
+        if new_password:
+            if new_password != confirm_password:
+                page.snack_bar = ft.SnackBar(ft.Text("Passwords do not match"), bgcolor=ft.Colors.RED_700)
+                page.snack_bar.open = True
+                page.update()
+                return
+            if len(new_password) < 6:
+                page.snack_bar = ft.SnackBar(ft.Text("Password must be at least 6 characters"), bgcolor=ft.Colors.RED_700)
+                page.snack_bar.open = True
+                page.update()
+                return
+        
+        # Load users data
+        users = _load_users()
+        old_key = current_user.lower()
+        
+        # Ensure the current user exists
+        if old_key not in users:
+            page.snack_bar = ft.SnackBar(ft.Text("User record not found. Please log in again."), bgcolor=ft.Colors.RED_700)
+            page.snack_bar.open = True
+            page.update()
+            page.go("/login")
+            return
 
+        # Check if new username already exists (if username changed)
+        if new_username != old_key and new_username in users:
+            page.snack_bar = ft.SnackBar(ft.Text("Username already exists"), bgcolor=ft.Colors.RED_700)
+            page.snack_bar.open = True
+            page.update()
+            return
+        
+        # Update user data
+        user_rec = users.get(old_key, {})
+        
+        # If username changed, create new entry and delete old one
+        if new_username != old_key:
+            users[new_username] = user_rec
+            del users[old_key]
+            current_user_key = new_username
+        else:
+            current_user_key = old_key
+        
+        # Update fields
+        users[current_user_key]["name"] = new_name
+        users[current_user_key]["email"] = new_email
+        
+        # Update password if provided
+        if new_password:
+            users[current_user_key]["password_hash"] = _hash_password(new_password)
+        
+        # Save changes
+        _save_users(users)
+        
+        # Update session if username changed
+        if new_username != old_key:
+            page.session.set("current_user", new_username)
+            display_username.value = new_username
+        else:
+            display_username.value = current_user
+        
+        # Log activity
+        log_activity("profile_updated", new_username, f"User {new_username} updated profile")
+        
+        # Clear password fields
+        current_password_field.value = ""
+        new_password_field.value = ""
+        confirm_password_field.value = ""
+        
+        page.snack_bar = ft.SnackBar(ft.Text("Profile updated successfully!"), bgcolor=ft.Colors.GREEN_700)
+        page.snack_bar.open = True
+        page.update()
+    
     def on_logout(e):
-        log_activity("logout", "admin" if is_admin_view else "user", "User logged out")
+        log_activity("logout", current_user, f"User {current_user} logged out")
         page.session.set("current_user", "")
         page.session.set("user_role", "User")
         page.go("/login")
     
-    def on_image_picked(e: ft.FilePickerResultEvent):
-        """Handle image selection from file picker."""
-        try:
-            if e.files:
-                selected_file = e.files[0].path
-                # Replace the icon with the actual image
-                profile_picture.content = ft.Image(
-                    src=selected_file,
-                    width=120,
-                    height=150,
-                    fit=ft.ImageFit.COVER,
-                )
-                profile_picture.update()
-        except Exception as ex:
-            page.snack_bar = ft.SnackBar(ft.Text(f"Image load error: {ex}"))
-            page.snack_bar.open = True
-            page.update()
+    def on_switch_profile(e):
+        # Toggle between admin and user profile views (admin-only)
+        if user_role != "Admin":
+            return
+        if is_admin_view:
+            page.go("/profile")
+        else:
+            page.go("/profile/admin")
+
+    # Basic Information Card - Compact
+    basic_info_card = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Column([
+                    ft.Text("Username", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    username_field,
+                ], spacing=2, expand=True),
+                ft.Container(width=8),
+                ft.Column([
+                    ft.Text("Name", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    name_field,
+                ], spacing=2, expand=True),
+            ], spacing=0),
+            ft.Container(height=8),
+            ft.Column([
+                ft.Text("Email", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                email_field,
+            ], spacing=2),
+        ], spacing=0),
+        padding=padding.all(10),
+        bgcolor=BG_WHITE,
+        border_radius=border_radius.all(6),
+        border=ft.border.all(1, BORDER_COLOR),
+    )
     
-    def on_update_profile(e):
-        """Handle profile update - saves username, email, password, and profile picture."""
-        try:
-            # Find underlying TextField controls
-            name_field = find_text_field(name_field_col)
-            email_field = find_text_field(email_field_col)
-            current_password_field = find_text_field(current_password_field_col)
-            new_password_field = find_text_field(new_password_field_col)
-
-            if not all([name_field, email_field, current_password_field, new_password_field]):
-                page.snack_bar = ft.SnackBar(ft.Text("Form fields not initialized correctly."))
-                page.snack_bar.open = True
-                page.update()
-                return
+    # Change Password Card - Compact
+    change_password_card = ft.Container(
+        content=ft.Column([
+            ft.Row([
+                ft.Column([
+                    ft.Text("Current Password", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    current_password_field,
+                ], spacing=2, expand=True),
+                ft.Container(width=8),
+                ft.Column([
+                    ft.Text("New Password", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                    new_password_field,
+                ], spacing=2, expand=True),
+            ], spacing=0),
+            ft.Container(height=8),
+            ft.Column([
+                ft.Text("Confirm Password", size=9, weight=ft.FontWeight.W_600, color=TEXT_COLOR),
+                confirm_password_field,
+            ], spacing=2),
+        ], spacing=0),
+        padding=padding.all(10),
+        bgcolor=BG_WHITE,
+        border_radius=border_radius.all(6),
+        border=ft.border.all(1, BORDER_COLOR),
+    )
+    
+    # Left Column with scrollable content - COMPACT
+    left_column = ft.Column(
+        [
+            # Basic Information Section
+            ft.Text("Basic Information", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+            ft.Container(height=8),
+            basic_info_card,
             
-            # Read values
-            new_username = (name_field.value or "").strip()
-            new_email = (email_field.value or "").strip()
-            current_password = (current_password_field.value or "").strip()
-            new_password = (new_password_field.value or "").strip()
+            ft.Container(height=12),
             
-            # Validate
-            if not new_username or not new_email:
-                page.snack_bar = ft.SnackBar(ft.Text("Username and Email are required!"))
-                page.snack_bar.open = True
-                page.update()
-                return
+            # Change Password Section
+            ft.Text("Change Password", size=12, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+            ft.Container(height=8),
+            change_password_card,
             
-            # Save username and email to session (or your persistent store)
-            page.session.set("username", new_username)
-            page.session.set("email", new_email)
+            ft.Container(height=12),  # Bottom padding
+        ],
+        spacing=0,
+        expand=True,
+        scroll=ft.ScrollMode.AUTO,
+    )
+    
+    # Right Column: Profile Picture and Actions - COMPACT
+    right_column = ft.Column(
+        [
+            # Profile Picture - Smaller for more space
+            ft.Container(
+                content=ft.Icon(Icons.PERSON, size=90, color=ft.Colors.WHITE),
+                width=160,
+                height=160,
+                border_radius=border_radius.all(80),
+                bgcolor=SECONDARY_COLOR,
+                alignment=ft.alignment.center,
+                border=ft.border.all(2, PRIMARY_COLOR),
+            ),
+            ft.Container(height=10),
             
-            # Save password if provided
-            if new_password:
-                if not current_password:
-                    page.snack_bar = ft.SnackBar(ft.Text("Current password is required to set new password!"))
-                    page.snack_bar.open = True
-                    page.update()
-                    return
-                page.session.set("password", new_password)
-            
-            # Save profile picture path if an image is present
-            if isinstance(profile_picture.content, ft.Image):
-                page.session.set("profile_picture", profile_picture.content.src)
-
-            # Log the activity
-            log_activity("profile_update", "admin" if is_admin_view else "user", f"Profile updated for {new_username}")
-
-            # Update UI controls
-            name_field.value = new_username
-            email_field.value = new_email
-            current_password_field.value = ""
-            new_password_field.value = ""
-
-            saved_pp = page.session.get("profile_picture")
-            if saved_pp:
-                profile_picture.content = ft.Image(
-                    src=saved_pp,
-                    width=120,
-                    height=150,
-                    fit=ft.ImageFit.COVER,
+            ft.TextButton(
+                "Change Picture",
+                on_click=None,
+                style=ft.ButtonStyle(
+                    color={ControlState.DEFAULT: PRIMARY_COLOR},
+                    text_style=ft.TextStyle(size=11, weight=ft.FontWeight.W_600)
                 )
-
-            # Show confirmation
-            page.snack_bar = ft.SnackBar(ft.Text("Profile updated successfully!"))
-            page.snack_bar.open = True
-
-            name_field.update()
-            email_field.update()
-            current_password_field.update()
-            new_password_field.update()
-            profile_picture.update()
-            page.update()
-
-        except Exception as ex:
-            page.snack_bar = ft.SnackBar(ft.Text(f"Update failed: {ex}"))
-            page.snack_bar.open = True
-            page.update()
-            raise
-
-    # Preload saved values
-    saved_username = page.session.get("username")
-    saved_email = page.session.get("email")
-    saved_profile_picture = page.session.get("profile_picture")
-
-    name_tf = find_text_field(name_field_col)
-    email_tf = find_text_field(email_field_col)
-
-    if name_tf and saved_username:
-        name_tf.value = saved_username
-    if email_tf and saved_email:
-        email_tf.value = saved_email
-    if saved_profile_picture:
-        profile_picture.content = ft.Image(
-            src=saved_profile_picture,
-            width=120,
-            height=150,
-            fit=ft.ImageFit.COVER,
-        )
-
-    # Create file picker
-    file_picker = ft.FilePicker(on_result=on_image_picked)
-    page.overlay.append(file_picker)
-
-    # --- FIXED PART: Bind click to REAL button inside wrapper ---
-
-    update_btn = create_admin_button("Update Profile", is_primary=True)
-
-    def set_click_recursive(ctrl):
-        """Recursively find the real button and attach on_click."""
-        if hasattr(ctrl, "on_click"):
-            ctrl.on_click = on_update_profile
-        if hasattr(ctrl, "controls"):
-            for c in ctrl.controls:
-                set_click_recursive(c)
-        if hasattr(ctrl, "content") and ctrl.content:
-            set_click_recursive(ctrl.content)
-
-    set_click_recursive(update_btn)
-
-    # Logout button
-    logout_btn = create_admin_button("Logout", is_primary=False)
-    set_click_recursive(logout_btn)  # also fix logout button
-    # Ensure logout still calls its handler
-    def fix_logout(ctrl):
-        if hasattr(ctrl, "on_click"):
-            ctrl.on_click = on_logout
-        if hasattr(ctrl, "controls"):
-            for c in ctrl.controls:
-                fix_logout(c)
-        if hasattr(ctrl, "content") and ctrl.content:
-            fix_logout(ctrl.content)
-    fix_logout(logout_btn)
-
-    # UI Layout
-    profile_card = ft.Container(
-        content=ft.Row(
-            [
-                ft.Column(
-                    [
-                        name_field_col,
-                        ft.Container(height=10),
-                        email_field_col,
-                        ft.Container(height=20),
-                        ft.Text("Change Password", size=18, weight=ft.FontWeight.BOLD),
-                        current_password_field_col,
-                        new_password_field_col,
-                    ],
-                    expand=True,
-                    spacing=0
-                ),
-                ft.VerticalDivider(width=1),
-                ft.Column(
-                    [
-                        profile_picture,
-                        ft.TextButton(
-                            "Change picture",
-                            on_click=lambda e: file_picker.pick_files(
-                                allowed_extensions=["jpg", "jpeg", "png", "gif", "bmp"]
-                            ),
-                            style=ft.ButtonStyle(
-                                bgcolor={ControlState.DEFAULT: ft.Colors.PURPLE_200},
-                                color={ControlState.DEFAULT: ft.Colors.BLACK}
-                            )
+            ),
+            
+            ft.Container(height=12),
+            
+            # User Info Display - More compact
+            ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        ft.Text("Username:", size=10, weight=ft.FontWeight.W_600, color=LIGHT_TEXT),
+                        display_username,
+                    ], spacing=4),
+                    ft.Container(height=6),
+                    ft.Row([
+                        ft.Text("Role:", size=10, weight=ft.FontWeight.W_600, color=LIGHT_TEXT),
+                        ft.Container(
+                            content=display_role,
+                            padding=padding.symmetric(horizontal=6, vertical=2),
+                            bgcolor=PRIMARY_COLOR,
+                            border_radius=border_radius.all(3),
                         ),
-                        ft.Container(height=40),
-                        update_btn,
-                        ft.Container(height=15),
-                        logout_btn,
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ], spacing=4),
+                ], spacing=0),
+                padding=padding.all(8),
+                bgcolor=BG_LIGHT,
+                border_radius=border_radius.all(4),
+            ),
+            
+            ft.Container(height=12),
+            
+            # Update Profile Button - Compact
+            ft.ElevatedButton(
+                "Update Profile",
+                bgcolor=PRIMARY_COLOR,
+                color=ft.Colors.WHITE,
+                width=150,
+                height=40,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=6),
+                    text_style=ft.TextStyle(size=11, weight=ft.FontWeight.W_600),
+                ),
+                on_click=on_update_profile,
+            ),
+            
+            ft.Container(height=8),
+            
+            # Logout Button - Compact
+            ft.ElevatedButton(
+                "Log Out",
+                bgcolor=BG_LIGHT,
+                color=PRIMARY_COLOR,
+                width=150,
+                height=40,
+                style=ft.ButtonStyle(
+                    shape=ft.RoundedRectangleBorder(radius=6),
+                    text_style=ft.TextStyle(size=11, weight=ft.FontWeight.W_600),
+                    side=ft.BorderSide(1.5, PRIMARY_COLOR),
+                ),
+                on_click=on_logout,
+            ),
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=0,
+    )
+    
+    # Main Profile Card - Reduced padding
+    profile_card = ft.Container(
+        content=ft.Column(
+            [
+                # Left and Right side in a row with scroll
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            # Left Column: Profile Information
+                            ft.Container(
+                                content=left_column,
+                                expand=True,
+                                padding=padding.only(right=12),
+                            ),
+                            # Divider
+                            ft.VerticalDivider(width=1, color=BORDER_COLOR),
+                            # Right Column: Picture and Actions
+                            ft.Container(
+                                content=right_column,
+                                width=200,
+                                padding=padding.only(left=12),
+                            ),
+                        ],
+                        spacing=0,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                    ),
+                    expand=True,
                 )
             ],
-            spacing=30
+            spacing=0,
+            expand=True,
         ),
-        padding=100,
-        bgcolor=ft.Colors.WHITE,
-        border_radius=border_radius.all(10),
+        padding=padding.all(16),
+        bgcolor=BG_WHITE,
+        border_radius=border_radius.all(12),
+        border=ft.border.all(1, BORDER_COLOR),
+        shadow=ft.BoxShadow(
+            spread_radius=0,
+            blur_radius=4,
+            color=ft.Colors.with_opacity(0.08, ft.Colors.BLACK),
+            offset=ft.Offset(0, 2),
+        ),
         expand=True,
     )
 
-    title_row = ft.Row(
+    # Header with title and role indicator
+    header = ft.Row(
         [
-            ft.Text("My Profile", size=24, weight=ft.FontWeight.BOLD),
+            ft.Text("My Profile", size=26, weight=ft.FontWeight.BOLD, color=TEXT_COLOR),
+            ft.Container(expand=True),
             ft.Container(
                 content=ft.Row([
-                    ft.Text("Admin 1", color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
-                    ft.Icon(Icons.ARROW_DROP_DOWN, color=ft.Colors.WHITE)
-                ]),
-                padding=padding.symmetric(horizontal=15, vertical=5),
+                    ft.Icon(Icons.ADMIN_PANEL_SETTINGS, color=ft.Colors.WHITE, size=16),
+                    ft.Text("Admin View", color=ft.Colors.WHITE, weight=ft.FontWeight.W_600, size=12),
+                    ft.Icon(Icons.ARROW_DROP_DOWN, color=ft.Colors.WHITE, size=16)
+                ], spacing=3),
+                padding=padding.symmetric(horizontal=10, vertical=6),
                 bgcolor=PRIMARY_COLOR,
                 border_radius=border_radius.all(5),
-            ) if is_admin_view else ft.Container()
+                on_click=on_switch_profile,
+                ink=True
+            ) if user_role == "Admin" else ft.Container()
         ],
-        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
+    # FIX: Added expand=True to this Column to ensure the content fully utilizes the available height
     content = ft.Column(
         [
-            title_row,
-            profile_card
+            header,
+            ft.Container(height=16),
+            profile_card,
+            ft.Container(height=16),
         ],
-        expand=True
+        spacing=0,
+        expand=True, # ADDED: Ensures the content pushes down and is fully scrollable in the main layout.
     )
-
-    user_role = page.session.get("user_role") or "User"
+    
     return create_main_layout(page, content, "/profile", user_role)
