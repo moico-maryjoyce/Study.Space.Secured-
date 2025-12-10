@@ -8,10 +8,11 @@ HEADER_BG_COLOR = BG_WHITE
 HEADER_HEIGHT = 80
 NAV_ITEM_HEIGHT = 50
 
-def create_main_layout(page: ft.Page, content: ft.Control, current_route: str):
+def create_main_layout(page: ft.Page, content: ft.Control, current_route: str, user_role: str = "User"):
     """
     Creates the common header/navigation layout for all internal screens.
     Includes navigation tabs with active indicators and settings button.
+    user_role: "Admin" or "User" - determines which tabs are visible
     """
     def navigate(e):
         page.go(e.control.data)
@@ -36,18 +37,24 @@ def create_main_layout(page: ft.Page, content: ft.Control, current_route: str):
             tooltip=text,
         )
 
+    # Build navigation items based on user role
+    nav_items = [
+        nav_item("Dashboard", "/dashboard"),
+        nav_item("Check In/Out", "/checkinout"),
+        nav_item("My Profile", "/profile"),
+    ]
+    
+    # Admin-only tabs
+    if user_role == "Admin":
+        nav_items.append(nav_item("Users", "/users"))
+        nav_items.append(nav_item("Audit Logs", "/auditlogs"))
+
     # Header with navigation
     header = ft.Container(
         content=ft.Row(
             [
                 ft.Row(
-                    [
-                        nav_item("Dashboard", "/dashboard"),
-                        nav_item("Check In/Out", "/checkinout"),
-                        nav_item("My Profile", "/profile"),
-                        nav_item("Users", "/users"),
-                        nav_item("Audit Logs", "/auditlogs"),
-                    ],
+                    nav_items,
                     spacing=0,
                     scroll=ft.ScrollMode.AUTO,
                 ),
@@ -78,13 +85,17 @@ def create_main_layout(page: ft.Page, content: ft.Control, current_route: str):
         ),
     )
 
-    # Main container
+    # Main container with proper scrolling
     return ft.Container(
         content=ft.Column(
             [
                 header,
                 ft.Container(
-                    content=content,
+                    content=ft.Column(
+                        [content],
+                        expand=True,
+                        scroll=ft.ScrollMode.AUTO,
+                    ),
                     padding=padding.all(28),
                     expand=True,
                     bgcolor=BG_COLOR,
